@@ -1,19 +1,17 @@
 const User = require("../models/User");
 
-
-exports.login = (req , res) =>{
+exports.login = (req, res) => {
     res.render("login", { pageTitle: "ورود به بخش مدیریت", path: "/login" });
 };
 
-exports.register = (req , res) =>{
+exports.register = (req, res) => {
     res.render("register", {
         pageTitle: "ثبت نام کاربر جدید",
         path: "/register",
     });
 };
 
-
-exports.createUser = async (req,res)=>{
+exports.createUser = async (req, res) => {
     try {
         await User.userValidation(req.body);
         //await User.create(req.body);
