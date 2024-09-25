@@ -1,9 +1,14 @@
 const path = require("path");
 
 const express = require("express");
+const mongoose = require("mongoose");
 const expressLayout = require("express-ejs-layouts");
+const passport = require("passport");
 const dotEnv = require("dotenv");
 const morgan = require("morgan");
+const flash = require("connect-flash");
+const session = require("express-session");
+const MongoStore = require("connect-mongo")(session);
 
 const connectDB = require("./config/db");
 
@@ -12,6 +17,9 @@ dotEnv.config({ path: "./config/config.env" });
 
 //* Database connection
 connectDB();
+
+//* Passport Configuration
+require("./config/passport");
 
 const app = express();
 
@@ -28,6 +36,23 @@ app.set("views", "views");
 
 //* BodyPaser
 app.use(express.urlencoded({ extended: false }));
+
+//* Session
+app.use(
+    session({
+        secret: "secret",
+        resave: false,
+        saveUninitialized: false,
+        store: new MongoStore({ mongooseConnection: mongoose.connection }),
+    })
+);
+
+//* Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+//* Flash
+app.use(flash()); //req.flash
 
 //* Static Folder
 app.use(express.static(path.join(__dirname, "public")));
