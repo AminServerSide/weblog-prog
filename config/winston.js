@@ -2,13 +2,13 @@ const winston = require("winston");
 const appRoot = require("app-root-path");
 
 const options = {
-    file: {
+    File: {
         level: "info",
         filename: `${appRoot}/logs/app.log`,
         handleExceptions: true,
         format: winston.format.json(),
-        maxsize: 500000,
-        maxfiles: 5,
+        maxsize: 5000000, //5MB
+        maxFile: 5,
     },
     console: {
         level: "debug",
@@ -16,22 +16,20 @@ const options = {
         format: winston.format.combine(
             winston.format.colorize(),
             winston.format.simple()
-        )
-    }
+        ),
+    },
 };
 
-const { transports } = winston; 
-
-const logger = winston.createLogger({ 
+const logger = new winston.createLogger({
     transports: [
-        new transports.File(options.file), 
-        new transports.Console(options.console), 
+        new winston.transports.File(options.File),
+        new winston.transports.Console(options.console),
     ],
-    exitOnError: false
+    exitOnError: false,
 });
 
 logger.stream = {
-    write: function(message) {
+    write: function (message) {
         logger.info(message);
     },
 };
