@@ -1,5 +1,7 @@
 const Blog = require("../models/Blog");
 
+const {formatDate} = require("../utils/jalali")
+
 exports.getDashboard = async (req, res) => {
     try {
         const blogs = await Blog.find({ user: req.user.id });
@@ -10,6 +12,7 @@ exports.getDashboard = async (req, res) => {
             layout: "./layouts/dashLayout",
             fullname: req.user.fullname,
             blogs,
+            formatDate
         });
     } catch (err) {
         console.log(err);
