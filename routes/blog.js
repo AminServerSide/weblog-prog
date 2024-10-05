@@ -9,7 +9,7 @@ const router = new Router();
 router.get("/", blogController.getIndex);
 
 //  @desc   Weblog Post Page
-//  @route  GET / post / :id
-router.get("/post/:id", blogController.getSinglePost); 
+//  @route  GET /post/:id
+router.get("/post/:id", blogController.getSinglePost);
 
 module.exports = router;

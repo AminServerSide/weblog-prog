@@ -1,12 +1,14 @@
+const fs = require("fs");
+
 const multer = require("multer");
 const sharp = require("sharp");
 const shortId = require("shortid");
+const appRoot = require("app-root-path");
 
 const Blog = require("../models/Blog");
 const { formatDate } = require("../utils/jalali");
 const { get500 } = require("./errorController");
 const { fileFilter } = require("../utils/multer");
-const { number } = require("yup");
 
 exports.getDashboard = async (req, res) => {
     const page = +req.query.page || 1;
@@ -74,9 +76,23 @@ exports.getEditPost = async (req, res) => {
 exports.editPost = async (req, res) => {
     const errorArr = [];
 
+    const thumbnail = req.files ? req.files.thumbnail : {};
+    const fileName = `${shortId.generate()}_${thumbnail.name}`;
+    const uploadPath = `${appRoot}/public/uploads/thumbnails/${fileName}`;
+
     const post = await Blog.findOne({ _id: req.params.id });
     try {
-        await Blog.postValidation(req.body);
+        if (thumbnail.name)
+            await Blog.postValidation({ ...req.body, thumbnail });
+        else
+            await Blog.postValidation({
+                ...req.body,
+                thumbnail: {
+                    name: "placeholder",
+                    size: 0,
+                    mimetype: "image/jpeg",
+                },
+            });
 
         if (!post) {
             return res.redirect("errors/404");
@@ -85,10 +101,26 @@ exports.editPost = async (req, res) => {
         if (post.user.toString() != req.user._id) {
             return res.redirect("/dashboard");
         } else {
+            if (thumbnail.name) {
+                fs.unlink(
+                    `${appRoot}/public/uploads/thumbnails/${post.thumbnail}`,
+                    async (err) => {
+                        if (err) console.log(err);
+                        else {
+                            await sharp(thumbnail.data)
+                                .jpeg({ quality: 60 })
+                                .toFile(uploadPath)
+                                .catch((err) => console.log(err));
+                        }
+                    }
+                );
+            }
+
             const { title, status, body } = req.body;
             post.title = title;
             post.status = status;
             post.body = body;
+            post.thumbnail = thumbnail.name ? fileName : post.thumbnail;
 
             await post.save();
             return res.redirect("/dashboard");
@@ -126,9 +158,25 @@ exports.deletePost = async (req, res) => {
 exports.createPost = async (req, res) => {
     const errorArr = [];
 
+    const thumbnail = req.files ? req.files.thumbnail : {};
+    const fileName = `${shortId.generate()}_${thumbnail.name}`;
+    const uploadPath = `${appRoot}/public/uploads/thumbnails/${fileName}`;
+
     try {
+        req.body = { ...req.body, thumbnail };
+
         await Blog.postValidation(req.body);
-        await Blog.create({ ...req.body, user: req.user.id });
+
+        await sharp(thumbnail.data)
+            .jpeg({ quality: 60 })
+            .toFile(uploadPath)
+            .catch((err) => console.log(err));
+
+        await Blog.create({
+            ...req.body,
+            user: req.user.id,
+            thumbnail: fileName,
+        });
         res.redirect("/dashboard");
     } catch (err) {
         console.log(err);
@@ -151,12 +199,8 @@ exports.createPost = async (req, res) => {
 exports.uploadImage = (req, res) => {
     const upload = multer({
         limits: { fileSize: 4000000 },
-        // dest: "uploads/",
-        // storage: storage,
         fileFilter: fileFilter,
     }).single("image");
-    //req.file
-    // console.log(req.file)
 
     upload(req, res, async (err) => {
         if (err) {

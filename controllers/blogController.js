@@ -5,13 +5,18 @@ const { truncate } = require("../utils/helpers");
 exports.getIndex = async (req, res) => {
     const page = +req.query.page || 1;
     const postPerPage = 5;
+
     try {
         const numberOfPosts = await Blog.find({
-            user: req.user._id,
+            status: "public",
         }).countDocuments();
-        const posts = await Blog.find({ status: "public" }).sort({
-            createdAt: "desc",
-        }).skip((page -1) * postPerPage).limit(postPerPage)
+
+        const posts = await Blog.find({ status: "public" })
+            .sort({
+                createdAt: "desc",
+            })
+            .skip((page - 1) * postPerPage)
+            .limit(postPerPage);
 
         res.render("index", {
             pageTitle: "وبلاگ",
@@ -26,6 +31,7 @@ exports.getIndex = async (req, res) => {
             hasPreviousPage: page > 1,
             lastPage: Math.ceil(numberOfPosts / postPerPage),
         });
+        //? Smooth Scrolling
     } catch (err) {
         console.log(err);
         res.render("errors/500");
