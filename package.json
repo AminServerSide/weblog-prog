@@ -16,6 +16,7 @@
         "bcryptjs": "^2.4.3",
         "body-parser": "^1.19.0",
         "buffer-crc32": "^1.0.0",
+        "captchapng": "^0.0.1",
         "connect-flash": "^0.1.1",
         "connect-mongo": "^3.2.0",
         "debug": "^4.3.1",
